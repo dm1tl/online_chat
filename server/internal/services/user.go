@@ -32,7 +32,7 @@ func (u *UserService) Create(ctx context.Context, req appmodels.CreateUserReq) e
 	}
 	err = u.repo.Create(ctx, *resp)
 	if err != nil {
-		if rollback := u.ssoClient.Delete(ctx, id); rollback != nil {
+		if rollback := u.ssoClient.Delete(ctx, resp.ID); rollback != nil {
 			return fmt.Errorf("failed to rollback user in grpc after DB error %s: %w", op, rollback)
 		}
 		return fmt.Errorf("%s: %w", op, err)
