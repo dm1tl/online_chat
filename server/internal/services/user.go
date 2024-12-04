@@ -22,10 +22,10 @@ func NewUserService(repo repository.UserManager, ssoCl sso.SSOProvider) *UserSer
 
 func (u *UserService) Create(ctx context.Context, req appmodels.CreateUserReq) error {
 	const op = "internal.services.Create()"
-	id, err := u.ssoClient.Register(ctx, req.Email, req.Password)
+	ssoResp, err := u.ssoClient.Register(ctx, req)
 	resp := &appmodels.CreateUserResp{
-		ID:       id,
-		Username: req.Username,
+		ID:       ssoResp.ID,
+		Username: ssoResp.Username,
 	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -43,23 +43,23 @@ func (u *UserService) Create(ctx context.Context, req appmodels.CreateUserReq) e
 func (u *UserService) Login(ctx context.Context, req appmodels.LoginReq) (appmodels.LoginResp, error) {
 	var resp appmodels.LoginResp
 	const op = "internal.services.Login()"
-	token, err := u.ssoClient.Login(ctx, req.Email, req.Password)
+	ssoResp, err := u.ssoClient.Login(ctx, req)
 	if err != nil {
 		return resp, fmt.Errorf("%s: %w", op, err)
 	}
 	return appmodels.LoginResp{
-		Token: token,
+		Token: ssoResp.Token,
 	}, nil
 }
 
 func (u *UserService) Validate(ctx context.Context, req appmodels.ValidateTokenReq) (appmodels.ValidateTokenResp, error) {
 	var resp appmodels.ValidateTokenResp
 	const op = "internal.service.Validate()"
-	id, err := u.ssoClient.Validate(ctx, req.Token)
+	ssoResp, err := u.ssoClient.Validate(ctx, req)
 	if err != nil {
 		return resp, fmt.Errorf("%s: %w", op, err)
 	}
 	return appmodels.ValidateTokenResp{
-		ID: id,
+		ID: ssoResp.ID,
 	}, nil
 }

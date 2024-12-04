@@ -1,0 +1,3 @@
+  address: localhost:44044
+  timeout: 5s
+  retriescount: 3
