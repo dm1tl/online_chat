@@ -1,1 +1,4 @@
-CREATE TABLE users (id INT UNIQUE, username VARCHAR)
+CREATE TABLE users (
+    id INT UNIQUE NOT NULL,
+    username VARCHAR(255) NOT NULL
+);

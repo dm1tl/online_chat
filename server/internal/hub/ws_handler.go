@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 )
 
 type WSHandler struct {
@@ -48,22 +49,33 @@ var upgrader = websocket.Upgrader{
 }
 
 func (w *WSHandler) JoinRoom(c *gin.Context) {
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		response.NewErrorResponse(c, http.StatusBadRequest, "couldn't establish connection to room")
-		return
-	}
 	roomID, err := strconv.ParseInt(c.Param("roomID"), 10, 64)
 	if err != nil {
 		response.NewErrorResponse(c, http.StatusBadRequest, "incorrect room id")
 		return
 	}
+
 	clientID, err := strconv.ParseInt(c.Query("userID"), 10, 64)
 	if err != nil {
 		response.NewErrorResponse(c, http.StatusBadRequest, "incorrect client id")
 		return
 	}
+
 	username := c.Query("username")
+	if username == "" {
+		response.NewErrorResponse(c, http.StatusBadRequest, "username is required")
+		return
+	}
+
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		logrus.Error(err)
+		conn.WriteJSON(response.ErrorResponse{
+			Message: "couldn't estalish connection",
+		})
+		return
+	}
+	defer conn.Close()
 
 	cl := &Client{
 		Conn:     conn,
@@ -83,5 +95,4 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 	w.hub.Broadcast <- msg
 	go cl.writeMessages()
 	cl.readMessages(w.hub)
-
 }

@@ -1,0 +1,5 @@
+address: "localhost:8082"
+maxheaderbytes: 1050000
+readtimeout: 10s
+writetimeout: 10s
+idletimeout: 60s

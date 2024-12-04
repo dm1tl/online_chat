@@ -29,7 +29,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	ws := router.Group("/ws")
 	{
 		ws.POST("/createRoom", h.wsHandler.CreateRoom)
-		ws.GET("/joinRoom/:roomid", h.wsHandler.JoinRoom)
+		ws.GET("/joinRoom/:roomID", h.wsHandler.JoinRoom)
 	}
 	return router
 }
