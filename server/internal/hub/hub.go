@@ -21,3 +21,38 @@ func NewHub() *Hub {
 		Broadcast:  make(chan *Message, 5),
 	}
 }
+
+func (h *Hub) Run() {
+	for {
+		select {
+		case cl := <-h.Register:
+			if r, ok := h.Rooms[cl.RoomID]; ok {
+				if _, ok := r.Clients[cl.ID]; !ok {
+					r.Clients[cl.ID] = cl
+				}
+			}
+		case cl := <-h.Unregister:
+			if r, ok := h.Rooms[cl.RoomID]; ok {
+				if _, ok := r.Clients[cl.ID]; ok {
+					msg := &Message{
+						Content:  "user " + cl.Username + " has left the room",
+						RoomID:   cl.RoomID,
+						Username: cl.Username,
+					}
+					if len(h.Rooms[cl.RoomID].Clients) != 0 {
+						h.Broadcast <- msg
+					}
+					delete(h.Rooms[cl.RoomID].Clients, cl.ID)
+					close(cl.Message)
+				}
+			}
+		case msg := <-h.Broadcast:
+			if _, ok := h.Rooms[msg.RoomID]; ok {
+				for _, cl := range h.Rooms[msg.RoomID].Clients {
+					cl.Message <- *msg
+				}
+			}
+		}
+	}
+
+}
