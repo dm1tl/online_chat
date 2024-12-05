@@ -55,12 +55,13 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 		return
 	}
 
-	clientID, err := strconv.ParseInt(c.Query("userID"), 10, 64)
+	clientID, err := w.getUserId(c)
 	if err != nil {
+		logrus.Error("userId", err)
 		response.NewErrorResponse(c, http.StatusBadRequest, "incorrect client id")
 		return
 	}
-
+	//todo get username from cookie
 	username := c.Query("username")
 	if username == "" {
 		response.NewErrorResponse(c, http.StatusBadRequest, "username is required")

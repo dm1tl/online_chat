@@ -26,7 +26,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
 	}
-	ws := router.Group("/ws")
+	ws := router.Group("/ws", h.userIdentity)
 	{
 		ws.POST("/createRoom", h.wsHandler.CreateRoom)
 		ws.GET("/joinRoom/:roomID", h.wsHandler.JoinRoom)
