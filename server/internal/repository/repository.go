@@ -8,6 +8,7 @@ import (
 
 type Repository struct {
 	UserManager
+	RoomManager
 }
 
 type DBTX interface {
@@ -15,14 +16,22 @@ type DBTX interface {
 	PrepareContext(context.Context, string) (*sql.Stmt, error)
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 }
 
 func NewRepository(db DBTX) *Repository {
 	return &Repository{
 		UserManager: NewUserRepository(db),
+		RoomManager: NewRoomRepository(db),
 	}
 }
 
 type UserManager interface {
-	Create(ctx context.Context, req appmodels.CreateUserResp) error
+	CreateUser(ctx context.Context, req appmodels.CreateUserResp) error
+}
+
+type RoomManager interface {
+	CreateRoom(ctx context.Context, req appmodels.CreateRoomReq) (int64, error)
+	GetRoom(ctx context.Context, req appmodels.AddClientReq) (*appmodels.GetRoomResp, error)
+	AddClient(ctx context.Context, req appmodels.AddClientReq) error
 }

@@ -1,9 +1,10 @@
 package infrastructure
 
 type Room struct {
-	ID      int64  `json:"id"`
-	Name    string `json:"name"`
-	Clients map[int64]*Client
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
+	Clients  map[int64]*Client
 }
 
 type Hub struct {

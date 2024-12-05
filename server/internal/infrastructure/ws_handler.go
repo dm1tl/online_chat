@@ -1,10 +1,13 @@
 package infrastructure
 
 import (
+	"context"
 	"net/http"
+	appmodels "server/internal/app_models"
 	"server/internal/services"
 	"server/internal/utils/response"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -23,20 +26,24 @@ func NewWSHandler(service *services.Service, hub *Hub) *WSHandler {
 	}
 }
 
-type createRoomReq struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
 func (w *WSHandler) CreateRoom(c *gin.Context) {
-	var input createRoomReq
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	var input appmodels.CreateRoomReq
 	if err := c.BindJSON(&input); err != nil {
+		logrus.Error(err)
 		response.NewErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
+	id, err := w.service.RoomManager.CreateRoom(ctx, input)
+	if err != nil {
+		logrus.Error(err)
+		response.NewErrorResponse(c, http.StatusBadRequest, "couldn't create room")
+		return
+	}
 
-	w.hub.Rooms[input.ID] = &Room{
-		ID:      input.ID,
+	w.hub.Rooms[id] = &Room{
+		ID:      id,
 		Name:    input.Name,
 		Clients: map[int64]*Client{},
 	}
@@ -52,6 +59,8 @@ var upgrader = websocket.Upgrader{
 }
 
 func (w *WSHandler) JoinRoom(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
 	roomID, err := strconv.ParseInt(c.Param("roomID"), 10, 64)
 	if err != nil {
 		response.NewErrorResponse(c, http.StatusBadRequest, "incorrect room id")
@@ -68,6 +77,41 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 	username := c.Query("username")
 	if username == "" {
 		response.NewErrorResponse(c, http.StatusBadRequest, "username is required")
+		return
+	}
+
+	password := c.Query("password")
+
+	input := &appmodels.AddClientReq{
+		RoomID:   roomID,
+		ClientID: clientID,
+		Username: username,
+		Password: password,
+	}
+	ok, err := w.service.RoomManager.GetRoom(ctx, *input)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"room_id": input.RoomID,
+			"user_id": input.ClientID,
+		}).Errorf("failed to join room: %v", err)
+
+		response.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	if !ok {
+		logrus.WithFields(logrus.Fields{
+			"room_id": input.RoomID,
+			"user_id": input.ClientID,
+		}).Warn("incorrect password provided")
+
+		response.NewErrorResponse(c, http.StatusUnauthorized, "incorrect password")
+		return
+	}
+
+	if err := w.service.RoomManager.AddClient(ctx, *input); err != nil {
+		logrus.Error(err)
+		response.NewErrorResponse(c, http.StatusBadRequest, "error while joining the room")
 		return
 	}
 

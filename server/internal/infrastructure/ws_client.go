@@ -17,6 +17,7 @@ type Message struct {
 	Content  string `json:"content"`
 	RoomID   int64  `json:"roomid"`
 	Username string `json:"username"`
+	UserID   int64  `json:"-"`
 }
 
 func (c *Client) writeMessages() {
@@ -52,6 +53,7 @@ func (c *Client) readMessages(hub *Hub) {
 			Content:  string(m),
 			RoomID:   c.RoomID,
 			Username: c.Username,
+			UserID:   c.ID,
 		}
 		hub.Broadcast <- msg
 	}

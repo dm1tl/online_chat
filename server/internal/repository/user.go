@@ -17,7 +17,7 @@ func NewUserRepository(db DBTX) *UserRepository {
 	}
 }
 
-func (u *UserRepository) Create(ctx context.Context, req appmodels.CreateUserResp) error {
+func (u *UserRepository) CreateUser(ctx context.Context, req appmodels.CreateUserResp) error {
 	const op = "internal.repository.Create()"
 	query := "INSERT INTO users (id, username) VALUES ($1, $2)"
 	row, err := u.db.ExecContext(ctx, query, req.ID, req.Username)
