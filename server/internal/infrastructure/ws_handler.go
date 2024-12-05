@@ -1,7 +1,8 @@
-package hub
+package infrastructure
 
 import (
 	"net/http"
+	"server/internal/services"
 	"server/internal/utils/response"
 	"strconv"
 
@@ -11,12 +12,14 @@ import (
 )
 
 type WSHandler struct {
-	hub *Hub
+	service *services.Service
+	hub     *Hub
 }
 
-func NewWSHandler(hub *Hub) *WSHandler {
+func NewWSHandler(service *services.Service, hub *Hub) *WSHandler {
 	return &WSHandler{
-		hub: hub,
+		service: service,
+		hub:     hub,
 	}
 }
 

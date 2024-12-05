@@ -7,8 +7,7 @@ import (
 	"os/signal"
 	"server/clients/sso"
 	"server/internal/config"
-	"server/internal/handler"
-	"server/internal/hub"
+	"server/internal/infrastructure"
 	"server/internal/repository"
 	"server/internal/repository/connector"
 	"server/internal/services"
@@ -46,16 +45,17 @@ func main() {
 	ssoClient := sso.NewSSOClientWrapper(ssogrpcServiceClient)
 	repository := repository.NewRepository(db.GetDB())
 	service := services.NewService(repository, ssoClient)
-	wshub := hub.NewHub()
+	wshub := infrastructure.NewHub()
 	go wshub.Run()
-	wsHandler := hub.NewWSHandler(wshub)
-	handler := handler.NewHandler(service, wsHandler)
+	wsHandler := infrastructure.NewWSHandler(service, wshub)
+	handlers := infrastructure.NewHandler(service)
+	router := infrastructure.NewRouter(handlers, wsHandler)
 	httpServerCfg, err := config.NewHTTPServerConfig()
 	if err != nil {
 		logrus.Fatal("couldn't get http server config", err)
 		return
 	}
-	server := config.NewServer(httpServerCfg, handler.InitRoutes())
+	server := config.NewServer(httpServerCfg, router.InitRoutes())
 	go func() {
 		if err := server.Run(); err != nil && err != http.ErrServerClosed {
 			logrus.Fatalf("cannot start server %s", err.Error())

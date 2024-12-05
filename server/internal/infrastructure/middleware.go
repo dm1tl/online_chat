@@ -1,4 +1,4 @@
-package handler
+package infrastructure
 
 import (
 	"context"
@@ -34,4 +34,10 @@ func (h *Handler) userIdentity(c *gin.Context) {
 	logrus.Info(userId)
 	c.Set(userCtx, userId.ID)
 	c.Next()
+}
+
+func (h *WSHandler) getUserId(c *gin.Context) (int64, error) {
+	id := c.GetInt64(userCtx)
+	logrus.Info(id)
+	return id, nil
 }

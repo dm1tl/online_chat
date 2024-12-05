@@ -1,4 +1,4 @@
-package hub
+package infrastructure
 
 import (
 	"github.com/gorilla/websocket"

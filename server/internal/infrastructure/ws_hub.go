@@ -1,4 +1,4 @@
-package hub
+package infrastructure
 
 type Room struct {
 	ID      int64  `json:"id"`
