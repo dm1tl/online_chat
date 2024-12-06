@@ -29,4 +29,5 @@ type RoomManager interface {
 	CreateRoom(ctx context.Context, req appmodels.CreateRoomReq) (int64, error)
 	AddClient(ctx context.Context, req appmodels.AddClientReq) error
 	GetRoom(ctx context.Context, req appmodels.AddClientReq) (bool, error)
+	AddMessage(ctx context.Context, req appmodels.AddMessageReq) error
 }

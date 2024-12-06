@@ -7,6 +7,7 @@ import (
 	"fmt"
 	appmodels "server/internal/app_models"
 	"server/internal/repository"
+	"time"
 )
 
 type RoomService struct {
@@ -51,4 +52,15 @@ func (r *RoomService) GetRoom(ctx context.Context, req appmodels.AddClientReq) (
 	}
 
 	return true, nil
+}
+
+func (r *RoomService) AddMessage(ctx context.Context, req appmodels.AddMessageReq) error {
+	const op = "service.AddMessage"
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+	defer cancel()
+	err := r.repo.RoomManager.AddMessage(ctx, req)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
 }

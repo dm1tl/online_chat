@@ -14,6 +14,7 @@ CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     client_id INT,
     room_id INT,
-    content VARCHAR(255),
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id, room_id) REFERENCES clients(id, room_id)
 );

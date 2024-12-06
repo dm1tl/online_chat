@@ -18,3 +18,10 @@ type AddClientReq struct {
 	Username string
 	Password string
 }
+
+type AddMessageReq struct {
+	Content  string
+	RoomID   int64
+	Username string
+	UserID   int64
+}

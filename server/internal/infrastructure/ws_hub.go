@@ -1,5 +1,10 @@
 package infrastructure
 
+import (
+	"fmt"
+	appmodels "server/internal/app_models"
+)
+
 type Room struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -8,18 +13,22 @@ type Room struct {
 }
 
 type Hub struct {
-	Rooms      map[int64]*Room
-	Register   chan *Client
-	Unregister chan *Client
-	Broadcast  chan *Message
+	Rooms        map[int64]*Room
+	Register     chan *Client
+	Unregister   chan *Client
+	Broadcast    chan *Message
+	SaveQue      chan *appmodels.AddMessageReq
+	ProcessedQue chan *appmodels.AddMessageReq
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Rooms:      make(map[int64]*Room),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		Broadcast:  make(chan *Message, 5),
+		Rooms:        make(map[int64]*Room),
+		Register:     make(chan *Client),
+		Unregister:   make(chan *Client),
+		Broadcast:    make(chan *Message, 5),
+		SaveQue:      make(chan *appmodels.AddMessageReq, 5),
+		ProcessedQue: make(chan *appmodels.AddMessageReq, 5),
 	}
 }
 
@@ -53,6 +62,9 @@ func (h *Hub) Run() {
 					cl.Message <- *msg
 				}
 			}
+		case req := <-h.SaveQue:
+			fmt.Println("Received message from SaveQue:", req)
+			h.ProcessedQue <- req
 		}
 	}
 

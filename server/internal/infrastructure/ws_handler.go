@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	appmodels "server/internal/app_models"
 	"server/internal/services"
@@ -125,6 +126,22 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 	}
 	defer conn.Close()
 
+	go func() {
+		fmt.Println("Starting message processing")
+		for msg := range w.hub.ProcessedQue {
+			err := w.service.RoomManager.AddMessage(context.Background(), *msg)
+			if err != nil {
+				logrus.Errorf("Failed to save message: %v", err)
+				sendErr := conn.WriteJSON(response.NewStatusResponse("failed to save message"))
+				if sendErr != nil {
+					logrus.Errorf("Failed to send error message to client: %v", sendErr)
+				}
+				continue
+			}
+			fmt.Println("Message processed and saved")
+		}
+	}()
+
 	cl := &Client{
 		Conn:     conn,
 		Message:  make(chan Message),
@@ -144,3 +161,5 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 	go cl.writeMessages()
 	cl.readMessages(w.hub)
 }
+
+//TODO implement methods for saving messages in database, implement methods for state recovery

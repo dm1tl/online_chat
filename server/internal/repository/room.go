@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	appmodels "server/internal/app_models"
+
+	"github.com/sirupsen/logrus"
 )
 
 type RoomRepository struct {
@@ -42,7 +44,7 @@ func (r *RoomRepository) AddClient(ctx context.Context, req appmodels.AddClientR
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	if res != 1 {
-		return fmt.Errorf("%s: %w", op, errors.New("error while adding in db"))
+		return fmt.Errorf("%s: %w", op, errors.New("error while adding client in db"))
 	}
 	return nil
 }
@@ -62,4 +64,17 @@ func (r *RoomRepository) GetRoom(ctx context.Context, req appmodels.AddClientReq
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	return &output, nil
+}
+
+func (r *RoomRepository) AddMessage(ctx context.Context, req appmodels.AddMessageReq) error {
+	op := "repository.AddMessage"
+
+	clQuery := "INSERT INTO messages (client_id, room_id, content) VALUES ($1, $2, $3)"
+	_, err := r.db.ExecContext(ctx, clQuery, req.UserID, req.RoomID, req.Content)
+	if err != nil {
+		logrus.Error(op, err)
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

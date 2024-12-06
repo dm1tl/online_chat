@@ -1,6 +1,9 @@
 package infrastructure
 
 import (
+	"fmt"
+	appmodels "server/internal/app_models"
+
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -55,6 +58,16 @@ func (c *Client) readMessages(hub *Hub) {
 			Username: c.Username,
 			UserID:   c.ID,
 		}
+		req := &appmodels.AddMessageReq{
+			Content:  msg.Content,
+			RoomID:   msg.RoomID,
+			Username: msg.Username,
+			UserID:   msg.UserID,
+		}
+		fmt.Println("Sending message to SaveQue:", req)
+		hub.SaveQue <- req
+		fmt.Println("Message sent to SaveQue")
 		hub.Broadcast <- msg
+		fmt.Println("Message broadcasted to clients")
 	}
 }
