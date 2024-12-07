@@ -4,7 +4,7 @@ CREATE TABLE rooms (
     password VARCHAR(255)
 );
 CREATE TABLE clients (
-    id INT UNIQUE,
+    id INT,
     username VARCHAR(255) NOT NULL,
     room_id INT,
     PRIMARY KEY (id, room_id),

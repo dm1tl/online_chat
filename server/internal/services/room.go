@@ -56,7 +56,7 @@ func (r *RoomService) GetRoom(ctx context.Context, req appmodels.AddClientReq) (
 
 func (r *RoomService) AddMessage(ctx context.Context, req appmodels.AddMessageReq) error {
 	const op = "service.AddMessage"
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	err := r.repo.RoomManager.AddMessage(ctx, req)
 	if err != nil {
