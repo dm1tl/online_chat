@@ -7,7 +7,6 @@ import (
 )
 
 type Repository struct {
-	UserManager
 	RoomManager
 }
 
@@ -21,13 +20,8 @@ type DBTX interface {
 
 func NewRepository(db DBTX) *Repository {
 	return &Repository{
-		UserManager: NewUserRepository(db),
 		RoomManager: NewRoomRepository(db),
 	}
-}
-
-type UserManager interface {
-	CreateUser(ctx context.Context, req appmodels.CreateUserResp) error
 }
 
 type RoomManager interface {

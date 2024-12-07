@@ -6,7 +6,7 @@ import (
 )
 
 type SSOProvider interface {
-	Register(ctx context.Context, req appmodels.CreateUserReq) (*appmodels.CreateUserResp, error)
+	Register(ctx context.Context, req appmodels.CreateUserReq) error
 	Login(ctx context.Context, req appmodels.LoginReq) (*appmodels.LoginResp, error)
 	Validate(ctx context.Context, req appmodels.ValidateTokenReq) (*appmodels.ValidateTokenResp, error)
 	Delete(ctx context.Context, id int64) error

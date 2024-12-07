@@ -14,7 +14,7 @@ type Service struct {
 
 func NewService(repo *repository.Repository, ssoclient *sso.SSOClientWrapper) *Service {
 	return &Service{
-		UserManager: NewUserService(repo.UserManager, ssoclient),
+		UserManager: NewUserService(ssoclient),
 		RoomManager: NewRoomService(repo),
 	}
 }

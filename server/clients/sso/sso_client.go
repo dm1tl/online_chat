@@ -72,21 +72,18 @@ func (c *SSOServiceCLient) Login(ctx context.Context,
 }
 
 func (c *SSOServiceCLient) Register(ctx context.Context,
-	req appmodels.CreateUserReq) (*appmodels.CreateUserResp, error) {
+	req appmodels.CreateUserReq) error {
 	const op = "clients.sso.grpc.Register()"
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	resp, err := c.authAPI.Register(ctx, &ssov1.RegisterRequest{
+	_, err := c.authAPI.Register(ctx, &ssov1.RegisterRequest{
 		Email:    req.Email,
 		Password: req.Password,
 	})
 	if err != nil {
-		return &appmodels.CreateUserResp{}, fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
-	return &appmodels.CreateUserResp{
-		ID:       resp.UserId,
-		Username: req.Username,
-	}, nil
+	return nil
 }
 
 func (c *SSOServiceCLient) Validate(ctx context.Context,

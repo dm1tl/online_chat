@@ -5,36 +5,22 @@ import (
 	"fmt"
 	"server/clients/sso"
 	appmodels "server/internal/app_models"
-	"server/internal/repository"
 )
 
 type UserService struct {
-	repo      repository.UserManager
 	ssoClient sso.SSOProvider
 }
 
-func NewUserService(repo repository.UserManager, ssoCl sso.SSOProvider) *UserService {
+func NewUserService(ssoCl sso.SSOProvider) *UserService {
 	return &UserService{
-		repo:      repo,
 		ssoClient: ssoCl,
 	}
 }
 
 func (u *UserService) Create(ctx context.Context, req appmodels.CreateUserReq) error {
 	const op = "internal.services.Create()"
-	ssoResp, err := u.ssoClient.Register(ctx, req)
-	resp := &appmodels.CreateUserResp{
-		ID:       ssoResp.ID,
-		Username: ssoResp.Username,
-	}
+	err := u.ssoClient.Register(ctx, req)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	err = u.repo.CreateUser(ctx, *resp)
-	if err != nil {
-		if rollback := u.ssoClient.Delete(ctx, resp.ID); rollback != nil {
-			return fmt.Errorf("failed to rollback user in grpc after DB error %s: %w", op, rollback)
-		}
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil

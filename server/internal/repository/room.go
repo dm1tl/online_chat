@@ -34,7 +34,7 @@ func (r *RoomRepository) CreateRoom(ctx context.Context, req appmodels.CreateRoo
 func (r *RoomRepository) AddClient(ctx context.Context, req appmodels.AddClientReq) error {
 	op := "repository.AddClient"
 
-	clQuery := "INSERT INTO clients (id, username, room_id) VALUES ($1, $2, $3)"
+	clQuery := "INSERT INTO clients (id, username, room_id) SELECT $1, $2, $3 WHERE NOT EXISTS (SELECT 1 FROM clients WHERE id = $1 AND room_id = $3)"
 	row, err := r.db.ExecContext(ctx, clQuery, req.ClientID, req.Username, req.RoomID)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
