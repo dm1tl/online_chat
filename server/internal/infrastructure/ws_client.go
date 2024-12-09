@@ -17,10 +17,11 @@ type Client struct {
 }
 
 type Message struct {
-	Content  string `json:"content"`
-	RoomID   int64  `json:"roomid"`
-	Username string `json:"username"`
-	UserID   int64  `json:"-"`
+	Content    string `json:"content"`
+	RoomID     int64  `json:"roomid"`
+	Username   string `json:"username"`
+	FromUserID int64  `json:"-"`
+	ToUserID   int64  `json:"-"`
 }
 
 func (c *Client) writeMessages() {
@@ -53,16 +54,16 @@ func (c *Client) readMessages(hub *Hub) {
 			break
 		}
 		msg := &Message{
-			Content:  string(m),
-			RoomID:   c.RoomID,
-			Username: c.Username,
-			UserID:   c.ID,
+			Content:    string(m),
+			RoomID:     c.RoomID,
+			Username:   c.Username,
+			FromUserID: c.ID,
 		}
 		req := &appmodels.AddMessageReq{
 			Content:  msg.Content,
 			RoomID:   msg.RoomID,
 			Username: msg.Username,
-			UserID:   msg.UserID,
+			UserID:   msg.FromUserID,
 		}
 		fmt.Println("Sending message to SaveQue:", req)
 		hub.SaveQue <- req

@@ -175,41 +175,31 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 		Username: username,
 	}
 
-	//var messages appmodels.BackupMessages
-	//for _, msg := range messages[roomID] {
-	//	fmt.Print(msg)
-	//	msgToClient := &Message{
-	//		Content:  "testingBackup",
-	//		RoomID:   int64(1),
-	//		Username: "dima",
-	//	}
-	//	w.hub.Recover <- msgToClient
-	//}
-	//	for _, msg := range messages {
-	//		if msg.RoomID == roomID {
-	//			msgToClient := &Message{
-	//				Content:  msg.Content,
-	//				RoomID:   msg.RoomID,
-	//				Username: msg.Username,
-	//			}
-	//			cl.Message <- *msgToClient
-	//		}
-	//	}
-
 	w.hub.Register <- cl
 	w.hub.Broadcast <- msg
 
-	msgToClient := &Message{
-		Content:  "testingBackup",
-		RoomID:   int64(1),
-		Username: "dima",
-		UserID:   int64(1),
-	}
-	fmt.Println("rooms", w.hub.Rooms)
-	fmt.Println("clients", w.hub.Rooms[roomID].Clients)
-	w.hub.Recover <- msgToClient
-
 	go cl.writeMessages()
+
+	backupMessages, err := w.service.GetAllMessages(ctx)
+	fmt.Println("messages", backupMessages)
+	if err != nil {
+		logrus.Error(err)
+		conn.WriteJSON(response.ErrorResponse{
+			Message: "couldn't recover old messages",
+		})
+		return
+	}
+	for _, msg := range backupMessages[roomID] {
+		msgToClient := &Message{
+			Content:    msg.Content,
+			RoomID:     msg.RoomID,
+			Username:   msg.Username,
+			FromUserID: msg.UserID,
+			ToUserID:   clientID,
+		}
+		w.hub.Recover <- msgToClient
+	}
+
 	cl.readMessages(w.hub)
 }
 

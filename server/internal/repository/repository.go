@@ -40,4 +40,5 @@ type ClientManager interface {
 
 type MessageManager interface {
 	AddMessage(ctx context.Context, req appmodels.AddMessageReq) error
+	GetAllMessages(ctx context.Context) (appmodels.BackupMessages, error)
 }

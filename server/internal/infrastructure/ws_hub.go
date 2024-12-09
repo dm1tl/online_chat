@@ -3,6 +3,8 @@ package infrastructure
 import (
 	"fmt"
 	appmodels "server/internal/app_models"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Room struct {
@@ -47,6 +49,7 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case cl := <-h.Register:
+			logrus.Info("client id ", cl.ID)
 			if r, ok := h.Rooms[cl.RoomID]; ok {
 				if _, ok := r.Clients[cl.ID]; !ok {
 					r.Clients[cl.ID] = cl
@@ -78,7 +81,8 @@ func (h *Hub) Run() {
 			h.ProcessedQue <- req
 		case msg := <-h.Recover:
 			fmt.Println("Received message from Recover:", msg)
-			cl := h.Rooms[msg.RoomID].Clients[msg.UserID]
+			logrus.Info(h.Rooms[msg.RoomID].Clients)
+			cl := h.Rooms[msg.RoomID].Clients[msg.ToUserID]
 			cl.Message <- msg
 		}
 	}

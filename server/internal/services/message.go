@@ -28,3 +28,11 @@ func (r *MessageService) AddMessage(ctx context.Context, req appmodels.AddMessag
 	}
 	return nil
 }
+
+func (r *MessageService) GetAllMessages(ctx context.Context) (appmodels.BackupMessages, error) {
+	output, err := r.repo.MessageManager.GetAllMessages(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return output, nil
+}
