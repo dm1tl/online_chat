@@ -20,7 +20,7 @@ func (h *Handler) signUp(c *gin.Context) {
 		response.NewErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
-	err := h.service.UserManager.Create(ctx, input)
+	err := h.service.AuthManager.Create(ctx, input)
 	if err != nil {
 		logrus.Error(err)
 		response.NewErrorResponse(c, http.StatusInternalServerError, "couldn't create an account, try again")
@@ -37,7 +37,7 @@ func (h *Handler) signIn(c *gin.Context) {
 		response.NewErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
-	token, err := h.service.UserManager.Login(ctx, input)
+	token, err := h.service.AuthManager.Login(ctx, input)
 	if err != nil {
 		response.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

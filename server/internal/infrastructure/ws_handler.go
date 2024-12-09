@@ -46,9 +46,28 @@ func (w *WSHandler) CreateRoom(c *gin.Context) {
 	w.hub.Rooms[id] = &Room{
 		ID:      id,
 		Name:    input.Name,
-		Clients: map[int64]*Client{},
+		Clients: make(map[int64]*Client),
 	}
 	c.JSON(http.StatusOK, response.NewStatusResponse("you succesfully created a room"))
+}
+
+func (w *WSHandler) GetRooms(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	rooms, err := w.service.GetAllRooms(ctx)
+	if err != nil {
+		logrus.Error(err)
+		response.NewErrorResponse(c, http.StatusBadRequest, "couldn't get all rooms, try again")
+		return
+	}
+	for _, room := range rooms {
+		w.hub.Rooms[room.ID] = &Room{
+			ID:      room.ID,
+			Name:    room.Name,
+			Clients: make(map[int64]*Client),
+		}
+	}
+	c.JSON(http.StatusOK, rooms)
 }
 
 var upgrader = websocket.Upgrader{
@@ -110,7 +129,7 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 		return
 	}
 
-	if err := w.service.RoomManager.AddClient(ctx, *input); err != nil {
+	if err := w.service.ClientManager.AddClient(ctx, *input); err != nil {
 		logrus.Error(err)
 		response.NewErrorResponse(c, http.StatusBadRequest, "error while joining the room")
 		return
@@ -129,7 +148,7 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 	go func() {
 		fmt.Println("Starting message processing")
 		for msg := range w.hub.ProcessedQue {
-			err := w.service.RoomManager.AddMessage(context.Background(), *msg)
+			err := w.service.MessageManager.AddMessage(context.Background(), *msg)
 			if err != nil {
 				logrus.Errorf("Failed to save message: %v", err)
 				sendErr := conn.WriteJSON(response.NewStatusResponse("failed to save message"))
@@ -144,7 +163,7 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 
 	cl := &Client{
 		Conn:     conn,
-		Message:  make(chan Message),
+		Message:  make(chan *Message),
 		RoomID:   roomID,
 		ID:       clientID,
 		Username: username,
@@ -156,8 +175,40 @@ func (w *WSHandler) JoinRoom(c *gin.Context) {
 		Username: username,
 	}
 
+	//var messages appmodels.BackupMessages
+	//for _, msg := range messages[roomID] {
+	//	fmt.Print(msg)
+	//	msgToClient := &Message{
+	//		Content:  "testingBackup",
+	//		RoomID:   int64(1),
+	//		Username: "dima",
+	//	}
+	//	w.hub.Recover <- msgToClient
+	//}
+	//	for _, msg := range messages {
+	//		if msg.RoomID == roomID {
+	//			msgToClient := &Message{
+	//				Content:  msg.Content,
+	//				RoomID:   msg.RoomID,
+	//				Username: msg.Username,
+	//			}
+	//			cl.Message <- *msgToClient
+	//		}
+	//	}
+
 	w.hub.Register <- cl
 	w.hub.Broadcast <- msg
+
+	msgToClient := &Message{
+		Content:  "testingBackup",
+		RoomID:   int64(1),
+		Username: "dima",
+		UserID:   int64(1),
+	}
+	fmt.Println("rooms", w.hub.Rooms)
+	fmt.Println("clients", w.hub.Rooms[roomID].Clients)
+	w.hub.Recover <- msgToClient
+
 	go cl.writeMessages()
 	cl.readMessages(w.hub)
 }

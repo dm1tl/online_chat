@@ -19,6 +19,7 @@ type Hub struct {
 	Broadcast    chan *Message
 	SaveQue      chan *appmodels.AddMessageReq
 	ProcessedQue chan *appmodels.AddMessageReq
+	Recover      chan *Message
 }
 
 func NewHub() *Hub {
@@ -29,7 +30,17 @@ func NewHub() *Hub {
 		Broadcast:    make(chan *Message, 5),
 		SaveQue:      make(chan *appmodels.AddMessageReq, 5),
 		ProcessedQue: make(chan *appmodels.AddMessageReq, 5),
+		Recover:      make(chan *Message, 5),
 	}
+}
+
+func (h *Hub) Recoverf() { //input - backup data
+	//recover rooms
+	//h.Rooms[id] = &Room{
+	//	ID:      id,
+	//	Name:    input.Name,
+	//	Clients: make(map[int64]*Client),
+	//}
 }
 
 func (h *Hub) Run() {
@@ -59,12 +70,16 @@ func (h *Hub) Run() {
 		case msg := <-h.Broadcast:
 			if _, ok := h.Rooms[msg.RoomID]; ok {
 				for _, cl := range h.Rooms[msg.RoomID].Clients {
-					cl.Message <- *msg
+					cl.Message <- msg
 				}
 			}
 		case req := <-h.SaveQue:
 			fmt.Println("Received message from SaveQue:", req)
 			h.ProcessedQue <- req
+		case msg := <-h.Recover:
+			fmt.Println("Received message from Recover:", msg)
+			cl := h.Rooms[msg.RoomID].Clients[msg.UserID]
+			cl.Message <- msg
 		}
 	}
 

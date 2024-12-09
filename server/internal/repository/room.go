@@ -3,11 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	appmodels "server/internal/app_models"
-
-	"github.com/sirupsen/logrus"
 )
 
 type RoomRepository struct {
@@ -31,24 +28,6 @@ func (r *RoomRepository) CreateRoom(ctx context.Context, req appmodels.CreateRoo
 	return id, nil
 }
 
-func (r *RoomRepository) AddClient(ctx context.Context, req appmodels.AddClientReq) error {
-	op := "repository.AddClient"
-
-	clQuery := "INSERT INTO clients (id, username, room_id) SELECT $1, $2, $3 WHERE NOT EXISTS (SELECT 1 FROM clients WHERE id = $1 AND room_id = $3)"
-	row, err := r.db.ExecContext(ctx, clQuery, req.ClientID, req.Username, req.RoomID)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	res, err := row.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	if res != 1 {
-		return fmt.Errorf("%s: %w", op, errors.New("error while adding client in db"))
-	}
-	return nil
-}
-
 func (r *RoomRepository) GetRoom(ctx context.Context, req appmodels.AddClientReq) (*appmodels.GetRoomResp, error) {
 	const op = "repository.GetRoom"
 	query := "SELECT id, name, password FROM rooms WHERE id = $1"
@@ -66,15 +45,24 @@ func (r *RoomRepository) GetRoom(ctx context.Context, req appmodels.AddClientReq
 	return &output, nil
 }
 
-func (r *RoomRepository) AddMessage(ctx context.Context, req appmodels.AddMessageReq) error {
-	op := "repository.AddMessage"
-
-	clQuery := "INSERT INTO messages (client_id, room_id, content) VALUES ($1, $2, $3)"
-	_, err := r.db.ExecContext(ctx, clQuery, req.UserID, req.RoomID, req.Content)
+func (r *RoomRepository) GetAllRooms(ctx context.Context) ([]appmodels.BackupRoom, error) {
+	op := "repository.GetAllRooms"
+	var output []appmodels.BackupRoom
+	query := "SELECT id, name, password FROM rooms"
+	res, err := r.db.QueryContext(ctx, query)
 	if err != nil {
-		logrus.Error(op, err)
-		return fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-
-	return nil
+	defer res.Close()
+	for res.Next() {
+		var room appmodels.BackupRoom
+		if err := res.Scan(&room.ID, &room.Name, &room.Password); err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		output = append(output, room)
+	}
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	return output, nil
 }

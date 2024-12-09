@@ -25,6 +25,7 @@ func (r *Router) InitRoutes() *gin.Engine {
 	{
 		ws.POST("/createRoom", r.wsHandler.CreateRoom)
 		ws.GET("/joinRoom/:roomID", r.wsHandler.JoinRoom)
+		ws.GET("/getRooms", r.wsHandler.GetRooms)
 	}
 	return router
 }

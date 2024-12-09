@@ -8,6 +8,8 @@ import (
 
 type Repository struct {
 	RoomManager
+	ClientManager
+	MessageManager
 }
 
 type DBTX interface {
@@ -20,13 +22,22 @@ type DBTX interface {
 
 func NewRepository(db DBTX) *Repository {
 	return &Repository{
-		RoomManager: NewRoomRepository(db),
+		RoomManager:    NewRoomRepository(db),
+		ClientManager:  NewClientRepository(db),
+		MessageManager: NewMessageRepository(db),
 	}
 }
 
 type RoomManager interface {
 	CreateRoom(ctx context.Context, req appmodels.CreateRoomReq) (int64, error)
 	GetRoom(ctx context.Context, req appmodels.AddClientReq) (*appmodels.GetRoomResp, error)
+	GetAllRooms(ctx context.Context) ([]appmodels.BackupRoom, error)
+}
+
+type ClientManager interface {
 	AddClient(ctx context.Context, req appmodels.AddClientReq) error
+}
+
+type MessageManager interface {
 	AddMessage(ctx context.Context, req appmodels.AddMessageReq) error
 }
